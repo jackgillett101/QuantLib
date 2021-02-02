@@ -11,7 +11,7 @@ jobs:
     - name: Setup
       run: |
         sudo apt-get update
-        sudo apt-get install -y clang-tidy-9 libboost-dev
+        sudo apt-get install -y clang-tidy-10 libboost-dev
     - name: Check
       run: |
         find . -name *.[hc]pp -not -name config.*.hpp -not -name all.hpp -not -name quantlib.hpp -not -name paralleltestrunner.hpp | sort | xargs -n 1 ./tools/run_tidy.sh
@@ -19,6 +19,7 @@ jobs:
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         branch: clang-tidy-fixes-${{ github.ref }}
+        delete-branch: true
         commit-message: 'Automated fixes by clang-tidy'
         title: 'Automated fixes by clang-tidy'
         author: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>

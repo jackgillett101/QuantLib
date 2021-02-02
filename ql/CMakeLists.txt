@@ -2011,18 +2011,13 @@ set(QuantLib_HDR
     pricingengines/vanilla/coshestonengine.hpp
     pricingengines/vanilla/discretizedvanillaoption.hpp
     pricingengines/vanilla/exponentialfittinghestonengine.hpp
-    pricingengines/vanilla/fdamericanengine.hpp
     pricingengines/vanilla/fdbatesvanillaengine.hpp
-    pricingengines/vanilla/fdbermudanengine.hpp
     pricingengines/vanilla/fdblackscholesvanillaengine.hpp
     pricingengines/vanilla/fdcirvanillaengine.hpp
     pricingengines/vanilla/fdcevvanillaengine.hpp
     pricingengines/vanilla/fdconditions.hpp
-    pricingengines/vanilla/fddividendamericanengine.hpp
     pricingengines/vanilla/fddividendengine.hpp
-    pricingengines/vanilla/fddividendeuropeanengine.hpp
     pricingengines/vanilla/fddividendshoutengine.hpp
-    pricingengines/vanilla/fdeuropeanengine.hpp
     pricingengines/vanilla/fdhestonhullwhitevanillaengine.hpp
     pricingengines/vanilla/fdhestonvanillaengine.hpp
     pricingengines/vanilla/fdmultiperiodengine.hpp
@@ -2295,10 +2290,10 @@ if(WIN32)
         # Windows needs to link static library (nothing is declared to export in QuantLib)
         message(FATAL_ERROR "You should build QuantLib in STATIC mode as nothing is exported from the library. Use BUILD_SHARED_LIBS=OFF")
     endif()
-    add_library(${QL_OUTPUT_NAME} ${QuantLib_SRC})
+    add_library(${QL_OUTPUT_NAME} ${QuantLib_SRC} ${QuantLib_HDR})
     set_property(TARGET ${QL_OUTPUT_NAME} PROPERTY PROJECT_LABEL "QuantLib")
 else()
-    add_library(${QL_OUTPUT_NAME} ${QuantLib_SRC})
+    add_library(${QL_OUTPUT_NAME} ${QuantLib_SRC} ${QuantLib_HDR})
 endif()
 set(QL_LINK_LIBRARY ${QL_OUTPUT_NAME} PARENT_SCOPE)
 
@@ -2312,4 +2307,3 @@ install(TARGETS ${QL_OUTPUT_NAME}
         LIBRARY DESTINATION lib
         PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
         )
-
