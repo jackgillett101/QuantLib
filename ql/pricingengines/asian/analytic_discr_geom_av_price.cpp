@@ -56,8 +56,15 @@ namespace QuantLib {
                 std::log(arguments_.runningAccumulator);
             pastFixings = arguments_.pastFixings;
         } else {  // it is being used as control variate
-            runningLog = 1.0;
-            pastFixings = 0;
+            if (this->arguments_.allPastFixingsProvided) {
+                runningLog = 0.0;
+                pastFixings = this->arguments_.allPastFixings.size();
+                for (Size i=0; i<pastFixings; i++)
+                    runningLog += std::log(this->arguments_.allPastFixings[i]);
+            } else {
+                runningLog = 1.0;
+                pastFixings = 0;
+            }
         }
 
         ext::shared_ptr<PlainVanillaPayoff> payoff =

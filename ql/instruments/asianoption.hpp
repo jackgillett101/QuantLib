@@ -65,6 +65,12 @@ namespace QuantLib {
                 const std::vector<Date>& fixingDates,
                 const ext::shared_ptr<StrikedTypePayoff>& payoff,
                 const ext::shared_ptr<Exercise>& exercise);
+        DiscreteAveragingAsianOption(
+                Average::Type averageType,
+                const std::vector<Date>& fixingDates,
+                const ext::shared_ptr<StrikedTypePayoff>& payoff,
+                const ext::shared_ptr<Exercise>& exercise,
+                const std::vector<Real>& allPastFixings = std::vector<Real>());
         void setupArguments(PricingEngine::arguments*) const override;
 
       protected:
@@ -72,6 +78,9 @@ namespace QuantLib {
         Real runningAccumulator_;
         Size pastFixings_;
         std::vector<Date> fixingDates_;
+
+        bool allPastFixingsProvided_;
+        std::vector<Real> allPastFixings_;
     };
 
     //! Extra %arguments for single-asset discrete-average Asian option
@@ -80,12 +89,16 @@ namespace QuantLib {
       public:
         arguments() : averageType(Average::Type(-1)),
                       runningAccumulator(Null<Real>()),
-                      pastFixings(Null<Size>()) {}
+                      pastFixings(Null<Size>()),
+                      allPastFixingsProvided(false),
+                      allPastFixings(std::vector<Real>()) {}
         void validate() const override;
         Average::Type averageType;
         Real runningAccumulator;
         Size pastFixings;
         std::vector<Date> fixingDates;
+        std::vector<Real> allPastFixings;
+        bool allPastFixingsProvided;
     };
 
     //! Extra %arguments for single-asset continuous-average Asian option

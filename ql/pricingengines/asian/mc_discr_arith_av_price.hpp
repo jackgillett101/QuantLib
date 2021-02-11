@@ -174,12 +174,28 @@ namespace QuantLib {
         // for seasoned option the geometric strike might be rescaled
         // to obtain an equivalent arithmetic strike.
         // Any change applied here MUST be applied to the analytic engine too
-        return ext::shared_ptr<typename
-            MCDiscreteArithmeticAPEngine<RNG,S>::path_pricer_type>(
-            new GeometricAPOPathPricer(
-              payoff->optionType(),
-              payoff->strike(),
-              process->riskFreeRate()->discount(this->timeGrid().back())));
+        if (this->arguments_.allPastFixingsProvided) {
+            Size pastFixings = this->arguments_.allPastFixings.size();
+            Real runningProduct = 1.0;
+            for (Size i=0; i<pastFixings; i++)
+                runningProduct *= this->arguments_.allPastFixings[i];
+
+            return ext::shared_ptr<typename
+                MCDiscreteArithmeticAPEngine<RNG,S>::path_pricer_type>(
+                new GeometricAPOPathPricer(
+                  payoff->optionType(),
+                  payoff->strike(),
+                  process->riskFreeRate()->discount(this->timeGrid().back()),
+                  runningProduct,
+                  pastFixings));
+        } else {
+            return ext::shared_ptr<typename
+                MCDiscreteArithmeticAPEngine<RNG,S>::path_pricer_type>(
+                new GeometricAPOPathPricer(
+                  payoff->optionType(),
+                  payoff->strike(),
+                  process->riskFreeRate()->discount(this->timeGrid().back())));
+        }
     }
 
     template <class RNG = PseudoRandom, class S = Statistics>
