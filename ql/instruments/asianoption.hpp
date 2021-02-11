@@ -87,18 +87,18 @@ namespace QuantLib {
     class DiscreteAveragingAsianOption::arguments
         : public OneAssetOption::arguments {
       public:
-        arguments() : averageType(Average::Type(-1)),
-                      runningAccumulator(Null<Real>()),
-                      pastFixings(Null<Size>()),
-                      allPastFixingsProvided(false),
-                      allPastFixings(std::vector<Real>()) {}
+        arguments()
+        : averageType(Average::Type(-1)), runningAccumulator(Null<Real>()),
+          pastFixings(Null<Size>()),
+
+          allPastFixings(std::vector<Real>()) {}
         void validate() const override;
         Average::Type averageType;
         Real runningAccumulator;
         Size pastFixings;
         std::vector<Date> fixingDates;
         std::vector<Real> allPastFixings;
-        bool allPastFixingsProvided;
+        bool allPastFixingsProvided = false;
     };
 
     //! Extra %arguments for single-asset continuous-average Asian option
