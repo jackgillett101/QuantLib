@@ -56,11 +56,10 @@ namespace QuantLib {
         std::vector<Date> fixingDates,
         const ext::shared_ptr<StrikedTypePayoff>& payoff,
         const ext::shared_ptr<Exercise>& exercise,
-        const std::vector<Real>& allPastFixings)
-    : OneAssetOption(payoff, exercise),
-      averageType_(averageType), runningAccumulator_(0.0), pastFixings_(0),
-      fixingDates_(fixingDates), allPastFixingsProvided_(true),
-      allPastFixings_(allPastFixings) {}
+        std::vector<Real> allPastFixings)
+    : OneAssetOption(payoff, exercise), averageType_(averageType), runningAccumulator_(0.0),
+      pastFixings_(0), fixingDates_(std::move(std::move(fixingDates))),
+      allPastFixingsProvided_(true), allPastFixings_(std::move(allPastFixings)) {}
 
     void DiscreteAveragingAsianOption::setupArguments(
                                        PricingEngine::arguments* args) const {
