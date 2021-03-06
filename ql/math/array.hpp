@@ -38,6 +38,7 @@
 #include <algorithm>
 #include <numeric>
 #include <vector>
+#include <initializer_list>
 #include <iomanip>
 
 namespace QuantLib {
@@ -67,6 +68,7 @@ namespace QuantLib {
         #ifdef QL_USE_DISPOSABLE
         Array(const Disposable<Array>&);
         #endif
+        Array(std::initializer_list<Real>);
         //! creates the array from an iterable sequence
         template <class ForwardIterator>
         Array(ForwardIterator begin, ForwardIterator end);
@@ -153,7 +155,7 @@ namespace QuantLib {
     template <>
     class Null<Array> {
       public:
-        Null() {}
+        Null() = default;
         operator Array() const { return Array(); }
     };
 
@@ -221,22 +223,22 @@ namespace QuantLib {
     // inline definitions
 
     inline Array::Array(Size size)
-    : data_(size != 0U ? new Real[size] : (Real*)(0)), n_(size) {}
+    : data_(size != 0U ? new Real[size] : (Real*)nullptr), n_(size) {}
 
     inline Array::Array(Size size, Real value)
-    : data_(size != 0U ? new Real[size] : (Real*)(0)), n_(size) {
+    : data_(size != 0U ? new Real[size] : (Real*)nullptr), n_(size) {
         std::fill(begin(),end(),value);
     }
 
     inline Array::Array(Size size, Real value, Real increment)
-    : data_(size != 0U ? new Real[size] : (Real*)(0)), n_(size) {
+    : data_(size != 0U ? new Real[size] : (Real*)nullptr), n_(size) {
         for (iterator i=begin(); i!=end(); ++i, value+=increment)
             *i = value;
     }
 
     inline Array::Array(const Array& from)
-    : data_(from.n_ != 0U ? new Real[from.n_] : (Real*)(0)), n_(from.n_) {
-        #if defined(QL_PATCH_MSVC) && defined(QL_DEBUG)
+    : data_(from.n_ != 0U ? new Real[from.n_] : (Real*)nullptr), n_(from.n_) {
+#if defined(QL_PATCH_MSVC) && defined(QL_DEBUG)
         if (n_)
         #endif
         std::copy(from.begin(),from.end(),begin());
@@ -268,7 +270,7 @@ namespace QuantLib {
             // Array with a given value, which we do here.
             Size n = begin;
             Real value = end;
-            data_.reset(n ? new Real[n] : (Real*)(0));
+            data_.reset(n ? new Real[n] : (Real*)nullptr);
             n_ = n;
             std::fill(a.begin(),a.end(),value);
         }
@@ -281,7 +283,7 @@ namespace QuantLib {
                                  const boost::false_type&) {
             // true iterators
             Size n = std::distance(begin, end);
-            data_.reset(n ? new Real[n] : (Real*)(0));
+            data_.reset(n ? new Real[n] : (Real*)nullptr);
             n_ = n;
             #if defined(QL_PATCH_MSVC) && defined(QL_DEBUG)
             if (n_)
@@ -289,6 +291,11 @@ namespace QuantLib {
             std::copy(begin, end, a.begin());
         }
 
+    }
+
+    inline Array::Array(std::initializer_list<Real> init) {
+        detail::_fill_array_(*this, data_, n_, init.begin(), init.end(),
+                             boost::false_type());
     }
 
     template <class ForwardIterator>

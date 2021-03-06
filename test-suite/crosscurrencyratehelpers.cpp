@@ -80,14 +80,15 @@ namespace crosscurrencyratehelpers_test {
         }
 
         std::vector<ext::shared_ptr<RateHelper> >
-        buildConstantNotionalXccyRateHelpers(std::vector<XccyTestDatum> xccyData,
+        buildConstantNotionalXccyRateHelpers(const std::vector<XccyTestDatum>& xccyData,
                                              const Handle<YieldTermStructure>& collateralHandle,
                                              bool isFxBaseCurrencyCollateralCurrency,
                                              bool isBasisOnFxBaseCurrencyLeg) const {
             std::vector<ext::shared_ptr<RateHelper> > instruments;
-            for (Size i = 0; i < xccyData.size(); i++) {
+            instruments.reserve(xccyData.size());
+            for (const auto& i : xccyData) {
                 instruments.push_back(constantNotionalXccyRateHelper(
-                    xccyData[i], collateralHandle, isFxBaseCurrencyCollateralCurrency,
+                    i, collateralHandle, isFxBaseCurrencyCollateralCurrency,
                     isBasisOnFxBaseCurrencyLeg));
             }
 
@@ -144,17 +145,17 @@ namespace crosscurrencyratehelpers_test {
 
                section 4.2.1, Table 2.
             */
-            basisData.push_back(XccyTestDatum(1, Years, -14.5));
-            basisData.push_back(XccyTestDatum(18, Months, -18.5));
-            basisData.push_back(XccyTestDatum(2, Years, -20.5));
-            basisData.push_back(XccyTestDatum(3, Years, -23.75));
-            basisData.push_back(XccyTestDatum(4, Years, -25.5));
-            basisData.push_back(XccyTestDatum(5, Years, -26.5));
-            basisData.push_back(XccyTestDatum(7, Years, -26.75));
-            basisData.push_back(XccyTestDatum(10, Years, -26.25));
-            basisData.push_back(XccyTestDatum(15, Years, -24.75));
-            basisData.push_back(XccyTestDatum(20, Years, -23.25));
-            basisData.push_back(XccyTestDatum(30, Years, -20.50));
+            basisData.emplace_back(1, Years, -14.5);
+            basisData.emplace_back(18, Months, -18.5);
+            basisData.emplace_back(2, Years, -20.5);
+            basisData.emplace_back(3, Years, -23.75);
+            basisData.emplace_back(4, Years, -25.5);
+            basisData.emplace_back(5, Years, -26.5);
+            basisData.emplace_back(7, Years, -26.75);
+            basisData.emplace_back(10, Years, -26.25);
+            basisData.emplace_back(15, Years, -24.75);
+            basisData.emplace_back(20, Years, -23.25);
+            basisData.emplace_back(30, Years, -20.50);
 
             today = calendar.adjust(Date(6, September, 2013));
             Settings::instance().evaluationDate() = today;
@@ -266,7 +267,7 @@ void CrossCurrencyRateHelpersTest::testBasisSwapsWithCollateralAndBasisInQuoteCc
 }
 
 test_suite* CrossCurrencyRateHelpersTest::suite() {
-    test_suite* suite = BOOST_TEST_SUITE("Cross currency rate helpers tests");
+    auto* suite = BOOST_TEST_SUITE("Cross currency rate helpers tests");
 
     suite->add(QUANTLIB_TEST_CASE(
         &CrossCurrencyRateHelpersTest::testBasisSwapsWithCollateralInQuoteAndBasisInBaseCcy));

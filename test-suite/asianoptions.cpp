@@ -209,121 +209,110 @@ void AsianOptionTest::testAnalyticContinuousGeometricAveragePriceGreeks() {
     ext::shared_ptr<BlackScholesMertonProcess> process(
          new BlackScholesMertonProcess(Handle<Quote>(spot), qTS, rTS, volTS));
 
-    for (Size i=0; i<LENGTH(types); i++) {
-      for (Size j=0; j<LENGTH(strikes); j++) {
-        for (Size k=0; k<LENGTH(lengths); k++) {
+    for (auto& type : types) {
+        for (double strike : strikes) {
+            for (int length : lengths) {
 
-            ext::shared_ptr<EuropeanExercise> maturity(
-                              new EuropeanExercise(today + lengths[k]*Years));
+                ext::shared_ptr<EuropeanExercise> maturity(
+                    new EuropeanExercise(today + length * Years));
 
-            ext::shared_ptr<PlainVanillaPayoff> payoff(
-                                new PlainVanillaPayoff(types[i], strikes[j]));
+                ext::shared_ptr<PlainVanillaPayoff> payoff(new PlainVanillaPayoff(type, strike));
 
-            ext::shared_ptr<PricingEngine> engine(new
-                 AnalyticContinuousGeometricAveragePriceAsianEngine(process));
+                ext::shared_ptr<PricingEngine> engine(
+                    new AnalyticContinuousGeometricAveragePriceAsianEngine(process));
 
-            ContinuousAveragingAsianOption option(Average::Geometric,
-                                                  payoff, maturity);
-            option.setPricingEngine(engine);
+                ContinuousAveragingAsianOption option(Average::Geometric, payoff, maturity);
+                option.setPricingEngine(engine);
 
-            Size pastFixings = Null<Size>();
-            Real runningAverage = Null<Real>();
+                Size pastFixings = Null<Size>();
+                Real runningAverage = Null<Real>();
 
-            for (Size l=0; l<LENGTH(underlyings); l++) {
-              for (Size m=0; m<LENGTH(qRates); m++) {
-                for (Size n=0; n<LENGTH(rRates); n++) {
-                  for (Size p=0; p<LENGTH(vols); p++) {
+                for (double u : underlyings) {
+                    for (double m : qRates) {
+                        for (double n : rRates) {
+                            for (double v : vols) {
 
-                      Real u = underlyings[l];
-                      Rate q = qRates[m],
-                           r = rRates[n];
-                      Volatility v = vols[p];
-                      spot->setValue(u);
-                      qRate->setValue(q);
-                      rRate->setValue(r);
-                      vol->setValue(v);
+                                Rate q = m, r = n;
+                                spot->setValue(u);
+                                qRate->setValue(q);
+                                rRate->setValue(r);
+                                vol->setValue(v);
 
-                      Real value = option.NPV();
-                      calculated["delta"]  = option.delta();
-                      calculated["gamma"]  = option.gamma();
-                      calculated["theta"]  = option.theta();
-                      calculated["rho"]    = option.rho();
-                      calculated["divRho"] = option.dividendRho();
-                      calculated["vega"]   = option.vega();
+                                Real value = option.NPV();
+                                calculated["delta"] = option.delta();
+                                calculated["gamma"] = option.gamma();
+                                calculated["theta"] = option.theta();
+                                calculated["rho"] = option.rho();
+                                calculated["divRho"] = option.dividendRho();
+                                calculated["vega"] = option.vega();
 
-                      if (value > spot->value()*1.0e-5) {
-                          // perturb spot and get delta and gamma
-                          Real du = u*1.0e-4;
-                          spot->setValue(u+du);
-                          Real value_p = option.NPV(),
-                               delta_p = option.delta();
-                          spot->setValue(u-du);
-                          Real value_m = option.NPV(),
-                               delta_m = option.delta();
-                          spot->setValue(u);
-                          expected["delta"] = (value_p - value_m)/(2*du);
-                          expected["gamma"] = (delta_p - delta_m)/(2*du);
+                                if (value > spot->value() * 1.0e-5) {
+                                    // perturb spot and get delta and gamma
+                                    Real du = u * 1.0e-4;
+                                    spot->setValue(u + du);
+                                    Real value_p = option.NPV(), delta_p = option.delta();
+                                    spot->setValue(u - du);
+                                    Real value_m = option.NPV(), delta_m = option.delta();
+                                    spot->setValue(u);
+                                    expected["delta"] = (value_p - value_m) / (2 * du);
+                                    expected["gamma"] = (delta_p - delta_m) / (2 * du);
 
-                          // perturb rates and get rho and dividend rho
-                          Spread dr = r*1.0e-4;
-                          rRate->setValue(r+dr);
-                          value_p = option.NPV();
-                          rRate->setValue(r-dr);
-                          value_m = option.NPV();
-                          rRate->setValue(r);
-                          expected["rho"] = (value_p - value_m)/(2*dr);
+                                    // perturb rates and get rho and dividend rho
+                                    Spread dr = r * 1.0e-4;
+                                    rRate->setValue(r + dr);
+                                    value_p = option.NPV();
+                                    rRate->setValue(r - dr);
+                                    value_m = option.NPV();
+                                    rRate->setValue(r);
+                                    expected["rho"] = (value_p - value_m) / (2 * dr);
 
-                          Spread dq = q*1.0e-4;
-                          qRate->setValue(q+dq);
-                          value_p = option.NPV();
-                          qRate->setValue(q-dq);
-                          value_m = option.NPV();
-                          qRate->setValue(q);
-                          expected["divRho"] = (value_p - value_m)/(2*dq);
+                                    Spread dq = q * 1.0e-4;
+                                    qRate->setValue(q + dq);
+                                    value_p = option.NPV();
+                                    qRate->setValue(q - dq);
+                                    value_m = option.NPV();
+                                    qRate->setValue(q);
+                                    expected["divRho"] = (value_p - value_m) / (2 * dq);
 
-                          // perturb volatility and get vega
-                          Volatility dv = v*1.0e-4;
-                          vol->setValue(v+dv);
-                          value_p = option.NPV();
-                          vol->setValue(v-dv);
-                          value_m = option.NPV();
-                          vol->setValue(v);
-                          expected["vega"] = (value_p - value_m)/(2*dv);
+                                    // perturb volatility and get vega
+                                    Volatility dv = v * 1.0e-4;
+                                    vol->setValue(v + dv);
+                                    value_p = option.NPV();
+                                    vol->setValue(v - dv);
+                                    value_m = option.NPV();
+                                    vol->setValue(v);
+                                    expected["vega"] = (value_p - value_m) / (2 * dv);
 
-                          // perturb date and get theta
-                          Time dT = dc.yearFraction(today-1, today+1);
-                          Settings::instance().evaluationDate() = today-1;
-                          value_m = option.NPV();
-                          Settings::instance().evaluationDate() = today+1;
-                          value_p = option.NPV();
-                          Settings::instance().evaluationDate() = today;
-                          expected["theta"] = (value_p - value_m)/dT;
+                                    // perturb date and get theta
+                                    Time dT = dc.yearFraction(today - 1, today + 1);
+                                    Settings::instance().evaluationDate() = today - 1;
+                                    value_m = option.NPV();
+                                    Settings::instance().evaluationDate() = today + 1;
+                                    value_p = option.NPV();
+                                    Settings::instance().evaluationDate() = today;
+                                    expected["theta"] = (value_p - value_m) / dT;
 
-                          // compare
-                          std::map<std::string,Real>::iterator it;
-                          for (it = calculated.begin();
-                               it != calculated.end(); ++it) {
-                              std::string greek = it->first;
-                              Real expct = expected  [greek],
-                                   calcl = calculated[greek],
-                                   tol   = tolerance [greek];
-                              Real error = relativeError(expct,calcl,u);
-                              if (error>tol) {
-                                  REPORT_FAILURE(greek, Average::Geometric,
-                                                 runningAverage, pastFixings,
-                                                 std::vector<Date>(),
-                                                 payoff, maturity,
-                                                 u, q, r, today, v,
-                                                 expct, calcl, tol);
-                              }
-                          }
-                      }
-                  }
+                                    // compare
+                                    std::map<std::string, Real>::iterator it;
+                                    for (it = calculated.begin(); it != calculated.end(); ++it) {
+                                        std::string greek = it->first;
+                                        Real expct = expected[greek], calcl = calculated[greek],
+                                             tol = tolerance[greek];
+                                        Real error = relativeError(expct, calcl, u);
+                                        if (error > tol) {
+                                            REPORT_FAILURE(greek, Average::Geometric,
+                                                           runningAverage, pastFixings,
+                                                           std::vector<Date>(), payoff, maturity, u,
+                                                           q, r, today, v, expct, calcl, tol);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
-              }
             }
         }
-      }
     }
 }
 
@@ -369,7 +358,7 @@ void AsianOptionTest::testAnalyticDiscreteGeometricAveragePrice() {
     ext::shared_ptr<Exercise> exercise(new EuropeanExercise(exerciseDate));
 
     std::vector<Date> fixingDates(futureFixings);
-    Integer dt = (Integer)std::lround(360.0/futureFixings);
+    auto dt = (Integer)std::lround(360.0 / futureFixings);
     fixingDates[0] = today + dt;
     for (Size j=1; j<futureFixings; j++)
         fixingDates[j] = fixingDates[j-1] + dt;
@@ -428,7 +417,7 @@ void AsianOptionTest::testAnalyticDiscreteGeometricAverageStrike() {
     ext::shared_ptr<Exercise> exercise(new EuropeanExercise(exerciseDate));
 
     std::vector<Date> fixingDates(futureFixings);
-    Integer dt = (Integer)std::lround(360.0/futureFixings);
+    auto dt = (Integer)std::lround(360.0 / futureFixings);
     fixingDates[0] = today + dt;
     for (Size j=1; j<futureFixings; j++)
         fixingDates[j] = fixingDates[j-1] + dt;
@@ -494,7 +483,7 @@ void AsianOptionTest::testMCDiscreteGeometricAveragePrice() {
     ext::shared_ptr<Exercise> exercise(new EuropeanExercise(exerciseDate));
 
     std::vector<Date> fixingDates(futureFixings);
-    Integer dt = (Integer)std::lround(360.0/futureFixings);
+    auto dt = (Integer)std::lround(360.0 / futureFixings);
     fixingDates[0] = today + dt;
     for (Size j=1; j<futureFixings; j++)
         fixingDates[j] = fixingDates[j-1] + dt;
@@ -525,15 +514,23 @@ void testDiscreteGeometricAveragePriceHeston(const ext::shared_ptr<PricingEngine
 
     // data from "A Recursive Method for Discretely Monitored Geometric Asian Option
     // Prices", Kim, Kim, Kim & Wee, Bull. Korean Math. Soc. 53, 733-749, 2016
-    int days[] =    {30, 91, 182, 365, 730, 1095, 30, 91, 182, 365, 730, 1095, 30,
-                      91, 182, 365, 730, 1095};
-    Real strikes[] = {90, 90, 90, 90, 90, 90, 100, 100, 100, 100, 100, 100, 110,
-                      110, 110, 110, 110, 110};
+    int days[] = {
+        30, 91, 182, 365, 730, 1095,
+        30, 91, 182, 365, 730, 1095,
+        30, 91, 182, 365, 730, 1095
+    };
+    Real strikes[] = {
+        90, 90, 90, 90, 90, 90,
+        100, 100, 100, 100, 100, 100,
+        110, 110, 110, 110, 110, 110
+    };
 
     // Prices from Tables 1, 2 and 3
-    Real prices[] =  {10.2732, 10.9554, 11.9916, 13.6950, 16.1773, 18.0146, 2.4389,
-                      3.7881, 5.2132, 7.2243, 9.9948, 12.0639, 0.1012, 0.5949, 1.4444,
-                      2.9479, 5.3531, 7.3315};
+    Real prices[] = {
+        10.2732, 10.9554, 11.9916, 13.6950, 16.1773, 18.0146,
+        2.4389, 3.7881, 5.2132, 7.2243, 9.9948, 12.0639,
+        0.1012, 0.5949, 1.4444, 2.9479, 5.3531, 7.3315
+    };
 
     DayCounter dc = Actual365Fixed();
     Date today = Settings::instance().evaluationDate();
@@ -627,9 +624,11 @@ void AsianOptionTest::testMCDiscreteGeometricAveragePriceHeston() {
 
     // 30-day options need wider tolerance due to uncertainty around what "weekly
     // fixing" dates mean over a 30-day month!
-    Real tol[] =     {4.0e-2, 2.0e-2, 2.0e-2, 3.0e-2, 3.0e-2, 2.0e-2, 1.0e-1, 1.0e-2,
-                      2.0e-2, 2.0e-2, 2.0e-2, 1.0e-2, 2.0e-2, 1.0e-2, 1.0e-2, 1.0e-2,
-                      1.0e-2, 1.0e-2};
+    Real tol[] = {
+        4.0e-2, 2.0e-2, 2.0e-2, 3.0e-2, 3.0e-2, 6.0e-2,
+        1.0e-1, 1.0e-2, 2.0e-2, 2.0e-2, 4.0e-2, 6.0e-2,
+        2.0e-2, 1.0e-2, 1.0e-2, 1.0e-2, 4.0e-2, 6.0e-2
+    };
 
     DayCounter dc = Actual365Fixed();
     Date today = Settings::instance().evaluationDate();
@@ -652,7 +651,7 @@ void AsianOptionTest::testMCDiscreteGeometricAveragePriceHeston() {
 
     ext::shared_ptr<PricingEngine> engine =
         MakeMCDiscreteGeometricAPHestonEngine<LowDiscrepancy>(hestonProcess)
-        .withSamples(65535)
+        .withSamples(32767)
         .withSeed(43);
 
     testDiscreteGeometricAveragePriceHeston(engine, tol);
@@ -699,13 +698,10 @@ void AsianOptionTest::testDiscreteGeometricAveragePriceHestonPastFixings() {
     Option::Type type(Option::Call);
     Average::Type averageType = Average::Geometric;
 
-    for (Size i=0; i<LENGTH(strikes); i++) {
-        for (Size j=0; j<LENGTH(days); j++) {
+    for (double strike : strikes) {
+        for (int day : days) {
             for (Size k=0; k<2; k++) {
-                Real strike = strikes[i];
-                int day = days[j];
-
-                Size futureFixings = int(std::floor(day/30.0));
+                Size futureFixings = int(std::floor(day / 30.0));
                 std::vector<Date> fixingDates(futureFixings);
                 Date expiryDate = today + day*Days;
 
@@ -744,7 +740,6 @@ void AsianOptionTest::testDiscreteGeometricAveragePriceHestonPastFixings() {
             }
         }
     }
-
 }
 
 namespace {
@@ -853,27 +848,25 @@ void AsianOptionTest::testMCDiscreteArithmeticAveragePrice() {
     Average::Type averageType = Average::Arithmetic;
     Real runningSum = 0.0;
     Size pastFixings = 0;
-    for (Size l=0; l<LENGTH(cases4); l++) {
+    for (auto& l : cases4) {
 
-        ext::shared_ptr<StrikedTypePayoff> payoff(new
-            PlainVanillaPayoff(cases4[l].type, cases4[l].strike));
+        ext::shared_ptr<StrikedTypePayoff> payoff(new PlainVanillaPayoff(l.type, l.strike));
 
-        Time dt = cases4[l].length/(cases4[l].fixings-1);
-        std::vector<Time> timeIncrements(cases4[l].fixings);
-        std::vector<Date> fixingDates(cases4[l].fixings);
-        timeIncrements[0] = cases4[l].first;
+        Time dt = l.length / (l.fixings - 1);
+        std::vector<Time> timeIncrements(l.fixings);
+        std::vector<Date> fixingDates(l.fixings);
+        timeIncrements[0] = l.first;
         fixingDates[0] = today + timeToDays(timeIncrements[0]);
-        for (Size i=1; i<cases4[l].fixings; i++) {
-            timeIncrements[i] = i*dt + cases4[l].first;
+        for (Size i = 1; i < l.fixings; i++) {
+            timeIncrements[i] = i * dt + l.first;
             fixingDates[i] = today + timeToDays(timeIncrements[i]);
         }
-        ext::shared_ptr<Exercise> exercise(new
-            EuropeanExercise(fixingDates[cases4[l].fixings-1]));
+        ext::shared_ptr<Exercise> exercise(new EuropeanExercise(fixingDates[l.fixings - 1]));
 
-        spot ->setValue(cases4[l].underlying);
-        qRate->setValue(cases4[l].dividendYield);
-        rRate->setValue(cases4[l].riskFreeRate);
-        vol  ->setValue(cases4[l].volatility);
+        spot->setValue(l.underlying);
+        qRate->setValue(l.dividendYield);
+        rRate->setValue(l.riskFreeRate);
+        vol->setValue(l.volatility);
 
         ext::shared_ptr<BlackScholesMertonProcess> stochProcess(new
             BlackScholesMertonProcess(Handle<Quote>(spot),
@@ -884,8 +877,8 @@ void AsianOptionTest::testMCDiscreteArithmeticAveragePrice() {
 
         ext::shared_ptr<PricingEngine> engine =
             MakeMCDiscreteArithmeticAPEngine<LowDiscrepancy>(stochProcess)
-            .withSamples(2047)
-            .withControlVariate(cases4[l].controlVariate);
+                .withSamples(2047)
+                .withControlVariate(l.controlVariate);
 
         DiscreteAveragingAsianOption option(averageType, runningSum,
                                             pastFixings, fixingDates,
@@ -893,7 +886,7 @@ void AsianOptionTest::testMCDiscreteArithmeticAveragePrice() {
         option.setPricingEngine(engine);
 
         Real calculated = option.NPV();
-        Real expected = cases4[l].result;
+        Real expected = l.result;
         Real tolerance = 2.0e-2;
         if (std::fabs(calculated-expected) > tolerance) {
             REPORT_FAILURE("value", averageType, runningSum, pastFixings,
@@ -902,7 +895,7 @@ void AsianOptionTest::testMCDiscreteArithmeticAveragePrice() {
                         vol->value(), expected, calculated, tolerance);
         }
 
-        if(cases4[l].fixings < 100) {
+        if (l.fixings < 100) {
             engine = ext::shared_ptr<PricingEngine>(
                     new FdBlackScholesAsianEngine(stochProcess, 100, 100, 100));
             option.setPricingEngine(engine);
@@ -915,7 +908,6 @@ void AsianOptionTest::testMCDiscreteArithmeticAveragePrice() {
             }
         }
     }
-
 }
 
 
@@ -955,26 +947,24 @@ void AsianOptionTest::testMCDiscreteArithmeticAveragePriceHeston() {
     Real runningSum = 0.0;
     Size pastFixings = 0;
 
-    for (Size l=0; l<LENGTH(cases); l++) {
+    for (auto& l : cases) {
 
-        ext::shared_ptr<StrikedTypePayoff> payoff(new
-            PlainVanillaPayoff(cases[l].type, cases[l].strike));
+        ext::shared_ptr<StrikedTypePayoff> payoff(new PlainVanillaPayoff(l.type, l.strike));
 
-        Time dt = cases[l].length/(cases[l].fixings-1);
-        std::vector<Time> timeIncrements(cases[l].fixings);
-        std::vector<Date> fixingDates(cases[l].fixings);
-        timeIncrements[0] = cases[l].first;
+        Time dt = l.length / (l.fixings - 1);
+        std::vector<Time> timeIncrements(l.fixings);
+        std::vector<Date> fixingDates(l.fixings);
+        timeIncrements[0] = l.first;
         fixingDates[0] = today + Integer(timeIncrements[0]*365.25);
-        for (Size i=1; i<cases[l].fixings; i++) {
-            timeIncrements[i] = i*dt + cases[l].first;
+        for (Size i = 1; i < l.fixings; i++) {
+            timeIncrements[i] = i * dt + l.first;
             fixingDates[i] = today + Integer(timeIncrements[i]*365.25);
         }
-        ext::shared_ptr<Exercise> exercise(new
-            EuropeanExercise(fixingDates[cases[l].fixings-1]));
+        ext::shared_ptr<Exercise> exercise(new EuropeanExercise(fixingDates[l.fixings - 1]));
 
-        spot ->setValue(cases[l].underlying);
-        qRate->setValue(cases[l].dividendYield);
-        rRate->setValue(cases[l].riskFreeRate);
+        spot->setValue(l.underlying);
+        qRate->setValue(l.dividendYield);
+        rRate->setValue(l.riskFreeRate);
 
         ext::shared_ptr<HestonProcess> hestonProcess(new
             HestonProcess(Handle<YieldTermStructure>(rTS),
@@ -985,7 +975,7 @@ void AsianOptionTest::testMCDiscreteArithmeticAveragePriceHeston() {
         ext::shared_ptr<PricingEngine> engine =
             MakeMCDiscreteArithmeticAPHestonEngine<LowDiscrepancy>(hestonProcess)
                 .withSeed(42)
-                .withSamples(32768);
+                .withSamples(8191);
 
         DiscreteAveragingAsianOption option(averageType, runningSum,
                                             pastFixings, fixingDates,
@@ -993,7 +983,7 @@ void AsianOptionTest::testMCDiscreteArithmeticAveragePriceHeston() {
         option.setPricingEngine(engine);
 
         Real calculated = option.NPV();
-        Real expected = cases[l].result;
+        Real expected = l.result;
         // Bounds given in paper, "22.48 to 22.52"
         Real tolerance = 2.0e-2;
 
@@ -1009,13 +999,13 @@ void AsianOptionTest::testMCDiscreteArithmeticAveragePriceHeston() {
             MakeMCDiscreteArithmeticAPHestonEngine<LowDiscrepancy>(hestonProcess)
                 .withSeed(42)
                 .withSteps(48)
-                .withSamples(8192)
+                .withSamples(8191)
                 .withControlVariate(true);
 
         option.setPricingEngine(engine2);
 
         Real calculatedCV = option.NPV();
-        Real expectedCV = cases[l].result;
+        Real expectedCV = l.result;
         tolerance = 2.50e-2;
 
         if (std::fabs(calculatedCV-expectedCV) > tolerance) {
@@ -1059,14 +1049,14 @@ void AsianOptionTest::testMCDiscreteArithmeticAveragePriceHeston() {
     ext::shared_ptr<PricingEngine> engine3 =
         MakeMCDiscreteArithmeticAPHestonEngine<LowDiscrepancy>(hestonProcess2)
             .withSeed(42)
-            .withSteps(360)
-            .withSamples(32768);
+            .withSteps(180)
+            .withSamples(32767);
 
     ext::shared_ptr<PricingEngine> engine4 =
         MakeMCDiscreteArithmeticAPHestonEngine<LowDiscrepancy>(hestonProcess2)
             .withSeed(42)
-            .withSteps(360)
-            .withSamples(16384)
+            .withSteps(180)
+            .withSamples(16383)
             .withControlVariate(true);
 
     std::vector<Date> fixingDates(120);
@@ -1077,7 +1067,7 @@ void AsianOptionTest::testMCDiscreteArithmeticAveragePriceHeston() {
     ext::shared_ptr<Exercise> exercise(new
         EuropeanExercise(fixingDates[119]));
 
-    for (Size i=0; i<5; i++) {
+    for (Size i=0; i<LENGTH(prices); i++) {
         Real strike = strikes[i];
         Real expected = prices[i];
 
@@ -1090,7 +1080,7 @@ void AsianOptionTest::testMCDiscreteArithmeticAveragePriceHeston() {
 
         option.setPricingEngine(engine3);
         Real calculated = option.NPV();
-        Real tolerance = 5.0e-2;
+        Real tolerance = 6.0e-2;
 
         if (std::fabs(calculated-expected) > tolerance) {
             REPORT_FAILURE("value", averageType, runningSum, pastFixings,
@@ -1199,27 +1189,25 @@ void AsianOptionTest::testMCDiscreteArithmeticAverageStrike() {
     Average::Type averageType = Average::Arithmetic;
     Real runningSum = 0.0;
     Size pastFixings = 0;
-    for (Size l=0; l<LENGTH(cases5); l++) {
+    for (auto& l : cases5) {
 
-        ext::shared_ptr<StrikedTypePayoff> payoff(new
-            PlainVanillaPayoff(cases5[l].type, cases5[l].strike));
+        ext::shared_ptr<StrikedTypePayoff> payoff(new PlainVanillaPayoff(l.type, l.strike));
 
-        Time dt = cases5[l].length/(cases5[l].fixings-1);
-        std::vector<Time> timeIncrements(cases5[l].fixings);
-        std::vector<Date> fixingDates(cases5[l].fixings);
-        timeIncrements[0] = cases5[l].first;
+        Time dt = l.length / (l.fixings - 1);
+        std::vector<Time> timeIncrements(l.fixings);
+        std::vector<Date> fixingDates(l.fixings);
+        timeIncrements[0] = l.first;
         fixingDates[0] = today + timeToDays(timeIncrements[0]);
-        for (Size i=1; i<cases5[l].fixings; i++) {
-            timeIncrements[i] = i*dt + cases5[l].first;
+        for (Size i = 1; i < l.fixings; i++) {
+            timeIncrements[i] = i * dt + l.first;
             fixingDates[i] = today + timeToDays(timeIncrements[i]);
         }
-        ext::shared_ptr<Exercise> exercise(new
-            EuropeanExercise(fixingDates[cases5[l].fixings-1]));
+        ext::shared_ptr<Exercise> exercise(new EuropeanExercise(fixingDates[l.fixings - 1]));
 
-        spot ->setValue(cases5[l].underlying);
-        qRate->setValue(cases5[l].dividendYield);
-        rRate->setValue(cases5[l].riskFreeRate);
-        vol  ->setValue(cases5[l].volatility);
+        spot->setValue(l.underlying);
+        qRate->setValue(l.dividendYield);
+        rRate->setValue(l.riskFreeRate);
+        vol->setValue(l.volatility);
 
         ext::shared_ptr<BlackScholesMertonProcess> stochProcess(new
             BlackScholesMertonProcess(Handle<Quote>(spot),
@@ -1238,7 +1226,7 @@ void AsianOptionTest::testMCDiscreteArithmeticAverageStrike() {
         option.setPricingEngine(engine);
 
         Real calculated = option.NPV();
-        Real expected = cases5[l].result;
+        Real expected = l.result;
         Real tolerance = 2.0e-2;
         if (std::fabs(calculated-expected) > tolerance) {
             REPORT_FAILURE("value", averageType, runningSum, pastFixings,
@@ -1247,7 +1235,6 @@ void AsianOptionTest::testMCDiscreteArithmeticAverageStrike() {
                            vol->value(), expected, calculated, tolerance);
         }
     }
-
 }
 
 void AsianOptionTest::testAnalyticDiscreteGeometricAveragePriceGreeks() {
@@ -1287,129 +1274,116 @@ void AsianOptionTest::testAnalyticDiscreteGeometricAveragePriceGreeks() {
     ext::shared_ptr<BlackScholesMertonProcess> process(
          new BlackScholesMertonProcess(Handle<Quote>(spot), qTS, rTS, volTS));
 
-    for (Size i=0; i<LENGTH(types); i++) {
-      for (Size j=0; j<LENGTH(strikes); j++) {
-        for (Size k=0; k<LENGTH(lengths); k++) {
+    for (auto& type : types) {
+        for (double strike : strikes) {
+            for (int length : lengths) {
 
-            ext::shared_ptr<EuropeanExercise> maturity(
-                              new EuropeanExercise(today + lengths[k]*Years));
+                ext::shared_ptr<EuropeanExercise> maturity(
+                    new EuropeanExercise(today + length * Years));
 
-            ext::shared_ptr<PlainVanillaPayoff> payoff(
-                                new PlainVanillaPayoff(types[i], strikes[j]));
+                ext::shared_ptr<PlainVanillaPayoff> payoff(new PlainVanillaPayoff(type, strike));
 
-            Real runningAverage = 120;
-            Size pastFixings = 1;
+                Real runningAverage = 120;
+                Size pastFixings = 1;
 
-            std::vector<Date> fixingDates;
-            for (Date d = today + 3*Months;
-                      d <= maturity->lastDate();
-                      d += 3*Months)
-                fixingDates.push_back(d);
+                std::vector<Date> fixingDates;
+                for (Date d = today + 3 * Months; d <= maturity->lastDate(); d += 3 * Months)
+                    fixingDates.push_back(d);
 
 
-            ext::shared_ptr<PricingEngine> engine(
-               new AnalyticDiscreteGeometricAveragePriceAsianEngine(process));
+                ext::shared_ptr<PricingEngine> engine(
+                    new AnalyticDiscreteGeometricAveragePriceAsianEngine(process));
 
-            DiscreteAveragingAsianOption option(Average::Geometric,
-                                                runningAverage, pastFixings,
-                                                fixingDates, payoff, maturity);
-            option.setPricingEngine(engine);
+                DiscreteAveragingAsianOption option(Average::Geometric, runningAverage, pastFixings,
+                                                    fixingDates, payoff, maturity);
+                option.setPricingEngine(engine);
 
-            for (Size l=0; l<LENGTH(underlyings); l++) {
-              for (Size m=0; m<LENGTH(qRates); m++) {
-                for (Size n=0; n<LENGTH(rRates); n++) {
-                  for (Size p=0; p<LENGTH(vols); p++) {
+                for (double u : underlyings) {
+                    for (double m : qRates) {
+                        for (double n : rRates) {
+                            for (double v : vols) {
 
-                      Real u = underlyings[l];
-                      Rate q = qRates[m],
-                           r = rRates[n];
-                      Volatility v = vols[p];
-                      spot->setValue(u);
-                      qRate->setValue(q);
-                      rRate->setValue(r);
-                      vol->setValue(v);
+                                Rate q = m, r = n;
+                                spot->setValue(u);
+                                qRate->setValue(q);
+                                rRate->setValue(r);
+                                vol->setValue(v);
 
-                      Real value = option.NPV();
-                      calculated["delta"]  = option.delta();
-                      calculated["gamma"]  = option.gamma();
-                      calculated["theta"]  = option.theta();
-                      calculated["rho"]    = option.rho();
-                      calculated["divRho"] = option.dividendRho();
-                      calculated["vega"]   = option.vega();
+                                Real value = option.NPV();
+                                calculated["delta"] = option.delta();
+                                calculated["gamma"] = option.gamma();
+                                calculated["theta"] = option.theta();
+                                calculated["rho"] = option.rho();
+                                calculated["divRho"] = option.dividendRho();
+                                calculated["vega"] = option.vega();
 
-                      if (value > spot->value()*1.0e-5) {
-                          // perturb spot and get delta and gamma
-                          Real du = u*1.0e-4;
-                          spot->setValue(u+du);
-                          Real value_p = option.NPV(),
-                               delta_p = option.delta();
-                          spot->setValue(u-du);
-                          Real value_m = option.NPV(),
-                               delta_m = option.delta();
-                          spot->setValue(u);
-                          expected["delta"] = (value_p - value_m)/(2*du);
-                          expected["gamma"] = (delta_p - delta_m)/(2*du);
+                                if (value > spot->value() * 1.0e-5) {
+                                    // perturb spot and get delta and gamma
+                                    Real du = u * 1.0e-4;
+                                    spot->setValue(u + du);
+                                    Real value_p = option.NPV(), delta_p = option.delta();
+                                    spot->setValue(u - du);
+                                    Real value_m = option.NPV(), delta_m = option.delta();
+                                    spot->setValue(u);
+                                    expected["delta"] = (value_p - value_m) / (2 * du);
+                                    expected["gamma"] = (delta_p - delta_m) / (2 * du);
 
-                          // perturb rates and get rho and dividend rho
-                          Spread dr = r*1.0e-4;
-                          rRate->setValue(r+dr);
-                          value_p = option.NPV();
-                          rRate->setValue(r-dr);
-                          value_m = option.NPV();
-                          rRate->setValue(r);
-                          expected["rho"] = (value_p - value_m)/(2*dr);
+                                    // perturb rates and get rho and dividend rho
+                                    Spread dr = r * 1.0e-4;
+                                    rRate->setValue(r + dr);
+                                    value_p = option.NPV();
+                                    rRate->setValue(r - dr);
+                                    value_m = option.NPV();
+                                    rRate->setValue(r);
+                                    expected["rho"] = (value_p - value_m) / (2 * dr);
 
-                          Spread dq = q*1.0e-4;
-                          qRate->setValue(q+dq);
-                          value_p = option.NPV();
-                          qRate->setValue(q-dq);
-                          value_m = option.NPV();
-                          qRate->setValue(q);
-                          expected["divRho"] = (value_p - value_m)/(2*dq);
+                                    Spread dq = q * 1.0e-4;
+                                    qRate->setValue(q + dq);
+                                    value_p = option.NPV();
+                                    qRate->setValue(q - dq);
+                                    value_m = option.NPV();
+                                    qRate->setValue(q);
+                                    expected["divRho"] = (value_p - value_m) / (2 * dq);
 
-                          // perturb volatility and get vega
-                          Volatility dv = v*1.0e-4;
-                          vol->setValue(v+dv);
-                          value_p = option.NPV();
-                          vol->setValue(v-dv);
-                          value_m = option.NPV();
-                          vol->setValue(v);
-                          expected["vega"] = (value_p - value_m)/(2*dv);
+                                    // perturb volatility and get vega
+                                    Volatility dv = v * 1.0e-4;
+                                    vol->setValue(v + dv);
+                                    value_p = option.NPV();
+                                    vol->setValue(v - dv);
+                                    value_m = option.NPV();
+                                    vol->setValue(v);
+                                    expected["vega"] = (value_p - value_m) / (2 * dv);
 
-                          // perturb date and get theta
-                          Time dT = dc.yearFraction(today-1, today+1);
-                          Settings::instance().evaluationDate() = today-1;
-                          value_m = option.NPV();
-                          Settings::instance().evaluationDate() = today+1;
-                          value_p = option.NPV();
-                          Settings::instance().evaluationDate() = today;
-                          expected["theta"] = (value_p - value_m)/dT;
+                                    // perturb date and get theta
+                                    Time dT = dc.yearFraction(today - 1, today + 1);
+                                    Settings::instance().evaluationDate() = today - 1;
+                                    value_m = option.NPV();
+                                    Settings::instance().evaluationDate() = today + 1;
+                                    value_p = option.NPV();
+                                    Settings::instance().evaluationDate() = today;
+                                    expected["theta"] = (value_p - value_m) / dT;
 
-                          // compare
-                          std::map<std::string,Real>::iterator it;
-                          for (it = calculated.begin();
-                               it != calculated.end(); ++it) {
-                              std::string greek = it->first;
-                              Real expct = expected  [greek],
-                                   calcl = calculated[greek],
-                                   tol   = tolerance [greek];
-                              Real error = relativeError(expct,calcl,u);
-                              if (error>tol) {
-                                  REPORT_FAILURE(greek, Average::Geometric,
-                                                 runningAverage, pastFixings,
-                                                 std::vector<Date>(),
-                                                 payoff, maturity,
-                                                 u, q, r, today, v,
-                                                 expct, calcl, tol);
-                              }
-                          }
-                      }
-                  }
+                                    // compare
+                                    std::map<std::string, Real>::iterator it;
+                                    for (it = calculated.begin(); it != calculated.end(); ++it) {
+                                        std::string greek = it->first;
+                                        Real expct = expected[greek], calcl = calculated[greek],
+                                             tol = tolerance[greek];
+                                        Real error = relativeError(expct, calcl, u);
+                                        if (error > tol) {
+                                            REPORT_FAILURE(greek, Average::Geometric,
+                                                           runningAverage, pastFixings,
+                                                           std::vector<Date>(), payoff, maturity, u,
+                                                           q, r, today, v, expct, calcl, tol);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
-              }
             }
         }
-      }
     }
 }
 
@@ -1478,6 +1452,36 @@ void AsianOptionTest::testPastFixings() {
              "past fixings had no effect on arithmetic average-price option"
              << "\n  without fixings: " << price1
              << "\n  with fixings:    " << price2);
+    }
+
+    // Test past-fixings-as-a-vector interface
+
+    std::vector<Real> allPastFixings = {spot->value() * 0.8, spot->value() * 0.8};
+
+    DiscreteAveragingAsianOption option1a(Average::Arithmetic, fixingDates1,
+                                          payoff, exercise);
+
+    DiscreteAveragingAsianOption option2a(Average::Arithmetic, fixingDates2,
+                                          payoff, exercise, allPastFixings);
+
+    option1a.setPricingEngine(engine);
+    option2a.setPricingEngine(engine);
+
+    Real price1a = option1a.NPV();
+    Real price2a = option2a.NPV();
+
+    if (std::fabs(price1 - price1a) > 1e-8) {
+        BOOST_ERROR(
+             "Unseasoned option prices do not match in old and new interface"
+             << "\n  Old Interface: " << price1
+             << "\n  New Interface: " << price1a);
+    }
+
+    if (std::fabs(price2 - price2a) > 1e-8) {
+        BOOST_ERROR(
+             "Seasoned option prices do not match in old and new interface"
+             << "\n  Old Interface: " << price2
+             << "\n  New Interface: " << price2a);
     }
 
     // MC arithmetic average-strike
@@ -1736,25 +1740,20 @@ void AsianOptionTest::testLevyEngine() {
     DayCounter dc = Actual360();
     Date today = Settings::instance().evaluationDate();
 
-    for (Size l=0; l<LENGTH(cases); l++) {
+    for (auto& l : cases) {
 
-        ext::shared_ptr<SimpleQuote> spot(new SimpleQuote(cases[l].spot));
-        ext::shared_ptr<YieldTermStructure> qTS =
-            flatRate(today, cases[l].dividendYield, dc);
-        ext::shared_ptr<YieldTermStructure> rTS =
-            flatRate(today, cases[l].riskFreeRate, dc);
-        ext::shared_ptr<BlackVolTermStructure> volTS =
-            flatVol(today, cases[l].volatility, dc);
+        ext::shared_ptr<SimpleQuote> spot(new SimpleQuote(l.spot));
+        ext::shared_ptr<YieldTermStructure> qTS = flatRate(today, l.dividendYield, dc);
+        ext::shared_ptr<YieldTermStructure> rTS = flatRate(today, l.riskFreeRate, dc);
+        ext::shared_ptr<BlackVolTermStructure> volTS = flatVol(today, l.volatility, dc);
 
         Average::Type averageType = Average::Arithmetic;
-        ext::shared_ptr<Quote> average(
-                                    new SimpleQuote(cases[l].currentAverage));
+        ext::shared_ptr<Quote> average(new SimpleQuote(l.currentAverage));
 
-        ext::shared_ptr<StrikedTypePayoff> payoff(
-                      new PlainVanillaPayoff(cases[l].type, cases[l].strike));
+        ext::shared_ptr<StrikedTypePayoff> payoff(new PlainVanillaPayoff(l.type, l.strike));
 
-        Date startDate = today - cases[l].elapsed;
-        Date maturity = startDate + cases[l].length;
+        Date startDate = today - l.elapsed;
+        Date maturity = startDate + l.length;
 
         ext::shared_ptr<Exercise> exercise(new EuropeanExercise(maturity));
 
@@ -1773,23 +1772,19 @@ void AsianOptionTest::testLevyEngine() {
         option.setPricingEngine(engine);
 
         Real calculated = option.NPV();
-        Real expected = cases[l].result;
+        Real expected = l.result;
         Real tolerance = 1.0e-4;
         Real error = std::fabs(expected-calculated);
         if (error > tolerance) {
-            BOOST_ERROR("Asian option with Levy engine:"
-                        << "\n    spot:            " << cases[l].spot
-                        << "\n    current average: " << cases[l].currentAverage
-                        << "\n    strike:          " << cases[l].strike
-                        << "\n    dividend yield:  " << cases[l].dividendYield
-                        << "\n    risk-free rate:  " << cases[l].riskFreeRate
-                        << "\n    volatility:      " << cases[l].volatility
-                        << "\n    reference date:  " << today
-                        << "\n    length:          " << cases[l].length
-                        << "\n    elapsed:         " << cases[l].elapsed
-                        << "\n    expected value:  " << expected
-                        << "\n    calculated:      " << calculated
-                        << "\n    error:           " << error);
+            BOOST_ERROR(
+                "Asian option with Levy engine:"
+                << "\n    spot:            " << l.spot << "\n    current average: "
+                << l.currentAverage << "\n    strike:          " << l.strike
+                << "\n    dividend yield:  " << l.dividendYield << "\n    risk-free rate:  "
+                << l.riskFreeRate << "\n    volatility:      " << l.volatility
+                << "\n    reference date:  " << today << "\n    length:          " << l.length
+                << "\n    elapsed:         " << l.elapsed << "\n    expected value:  " << expected
+                << "\n    calculated:      " << calculated << "\n    error:           " << error);
         }
     }
 }
@@ -1830,22 +1825,18 @@ void AsianOptionTest::testVecerEngine() {
     Size timeSteps = 200;
     Size assetSteps = 200;
 
-    for (Size i=0; i<LENGTH(cases); ++i) {
-        Handle<Quote> u(ext::make_shared<SimpleQuote>(cases[i].spot));
-        Handle<YieldTermStructure> r(flatRate(today,
-                                              cases[i].riskFreeRate,
-                                              dayCounter));
-        Handle<BlackVolTermStructure> sigma(flatVol(today,
-                                                    cases[i].volatility,
-                                                    dayCounter));
+    for (auto& i : cases) {
+        Handle<Quote> u(ext::make_shared<SimpleQuote>(i.spot));
+        Handle<YieldTermStructure> r(flatRate(today, i.riskFreeRate, dayCounter));
+        Handle<BlackVolTermStructure> sigma(flatVol(today, i.volatility, dayCounter));
         ext::shared_ptr<BlackScholesMertonProcess> process =
             ext::make_shared<BlackScholesMertonProcess>(u, q, r, sigma);
 
-        Date maturity = today + cases[i].length*360;
+        Date maturity = today + i.length * 360;
         ext::shared_ptr<Exercise> exercise =
             ext::make_shared<EuropeanExercise>(maturity);
         ext::shared_ptr<StrikedTypePayoff> payoff =
-            ext::make_shared<PlainVanillaPayoff>(type, cases[i].strike);
+            ext::make_shared<PlainVanillaPayoff>(type, i.strike);
         Handle<Quote> average(ext::make_shared<SimpleQuote>(0.0));
 
         ContinuousAveragingAsianOption option(Average::Arithmetic,
@@ -1855,14 +1846,12 @@ void AsianOptionTest::testVecerEngine() {
                 process,average,today,timeSteps,assetSteps,-1.0,1.0));
 
         Real calculated = option.NPV();
-        Real error = std::fabs(calculated - cases[i].result);
-        if (error > cases[i].tolerance)
+        Real error = std::fabs(calculated - i.result);
+        if (error > i.tolerance)
             BOOST_ERROR("Failed to reproduce expected NPV"
-                        << "\n    calculated: " << calculated
-                        << "\n    expected:   " << cases[i].result
-                        << "\n    expected:   " << cases[i].result
-                        << "\n    error:      " << error
-                        << "\n    tolerance:  " << cases[i].tolerance);
+                        << "\n    calculated: " << calculated << "\n    expected:   " << i.result
+                        << "\n    expected:   " << i.result << "\n    error:      " << error
+                        << "\n    tolerance:  " << i.tolerance);
     }
 }
 
@@ -2035,46 +2024,41 @@ void AsianOptionTest::testAnalyticContinuousGeometricAveragePriceHeston() {
 
 }
 
-test_suite* AsianOptionTest::suite() {
-    test_suite* suite = BOOST_TEST_SUITE("Asian option tests");
+test_suite* AsianOptionTest::suite(SpeedLevel speed) {
+    auto* suite = BOOST_TEST_SUITE("Asian option tests");
 
-    suite->add(QUANTLIB_TEST_CASE(
-        &AsianOptionTest::testAnalyticContinuousGeometricAveragePrice));
-    suite->add(QUANTLIB_TEST_CASE(
-        &AsianOptionTest::testAnalyticContinuousGeometricAveragePriceGreeks));
-    suite->add(QUANTLIB_TEST_CASE(
-        &AsianOptionTest::testAnalyticDiscreteGeometricAveragePrice));
-    suite->add(QUANTLIB_TEST_CASE(
-        &AsianOptionTest::testAnalyticDiscreteGeometricAverageStrike));
-    suite->add(QUANTLIB_TEST_CASE(
-        &AsianOptionTest::testMCDiscreteGeometricAveragePrice));
-    suite->add(QUANTLIB_TEST_CASE(
-        &AsianOptionTest::testMCDiscreteGeometricAveragePriceHeston));
-    suite->add(QUANTLIB_TEST_CASE(
-        &AsianOptionTest::testMCDiscreteArithmeticAveragePrice));
-    suite->add(QUANTLIB_TEST_CASE(
-        &AsianOptionTest::testMCDiscreteArithmeticAveragePriceHeston));
-    suite->add(QUANTLIB_TEST_CASE(
-        &AsianOptionTest::testMCDiscreteArithmeticAverageStrike));
-    suite->add(QUANTLIB_TEST_CASE(
-        &AsianOptionTest::testAnalyticDiscreteGeometricAveragePriceGreeks));
-    suite->add(QUANTLIB_TEST_CASE(
-        &AsianOptionTest::testPastFixings));
-    suite->add(QUANTLIB_TEST_CASE(
-        &AsianOptionTest::testAllFixingsInThePast));
+    suite->add(QUANTLIB_TEST_CASE(&AsianOptionTest::testAnalyticContinuousGeometricAveragePrice));
+    suite->add(QUANTLIB_TEST_CASE(&AsianOptionTest::testAnalyticContinuousGeometricAveragePriceGreeks));
+    suite->add(QUANTLIB_TEST_CASE(&AsianOptionTest::testAnalyticDiscreteGeometricAveragePrice));
+    suite->add(QUANTLIB_TEST_CASE(&AsianOptionTest::testAnalyticDiscreteGeometricAverageStrike));
+    suite->add(QUANTLIB_TEST_CASE(&AsianOptionTest::testMCDiscreteGeometricAveragePrice));
+    suite->add(QUANTLIB_TEST_CASE(&AsianOptionTest::testMCDiscreteArithmeticAverageStrike));
+    suite->add(QUANTLIB_TEST_CASE(&AsianOptionTest::testAnalyticDiscreteGeometricAveragePriceGreeks));
+    suite->add(QUANTLIB_TEST_CASE(&AsianOptionTest::testPastFixings));
+    suite->add(QUANTLIB_TEST_CASE(&AsianOptionTest::testAllFixingsInThePast));
+
+    if (speed <= Fast) {
+        suite->add(QUANTLIB_TEST_CASE(&AsianOptionTest::testMCDiscreteArithmeticAveragePrice));
+    }
+
+    if (speed == Slow) {
+        suite->add(QUANTLIB_TEST_CASE(&AsianOptionTest::testMCDiscreteGeometricAveragePriceHeston));
+        suite->add(QUANTLIB_TEST_CASE(&AsianOptionTest::testMCDiscreteArithmeticAveragePriceHeston));
+    }
 
     return suite;
 }
 
-test_suite* AsianOptionTest::experimental() {
-    test_suite* suite = BOOST_TEST_SUITE("Asian option experimental tests");
+test_suite* AsianOptionTest::experimental(SpeedLevel speed) {
+    auto* suite = BOOST_TEST_SUITE("Asian option experimental tests");
     suite->add(QUANTLIB_TEST_CASE(&AsianOptionTest::testLevyEngine));
     suite->add(QUANTLIB_TEST_CASE(&AsianOptionTest::testVecerEngine));
-    suite->add(QUANTLIB_TEST_CASE(
-        &AsianOptionTest::testAnalyticContinuousGeometricAveragePriceHeston));
-    suite->add(QUANTLIB_TEST_CASE(
-        &AsianOptionTest::testAnalyticDiscreteGeometricAveragePriceHeston));
-    suite->add(QUANTLIB_TEST_CASE(
-        &AsianOptionTest::testDiscreteGeometricAveragePriceHestonPastFixings));
+    suite->add(QUANTLIB_TEST_CASE(&AsianOptionTest::testAnalyticContinuousGeometricAveragePriceHeston));
+    suite->add(QUANTLIB_TEST_CASE(&AsianOptionTest::testAnalyticDiscreteGeometricAveragePriceHeston));
+
+    if (speed <= Fast) {
+        suite->add(QUANTLIB_TEST_CASE(&AsianOptionTest::testDiscreteGeometricAveragePriceHestonPastFixings));
+    }
+
     return suite;
 }

@@ -50,7 +50,7 @@ namespace QuantLib {
         TripleBandLinearOp& operator=(const Disposable<TripleBandLinearOp>& m);
         #endif
 
-        Disposable<Array> apply(const Array& r) const;
+        Disposable<Array> apply(const Array& r) const override;
         Disposable<Array> solve_splitting(const Array& r, Real a,
                                           Real b = 1.0) const;
 
@@ -68,11 +68,11 @@ namespace QuantLib {
         void swap(TripleBandLinearOp& m);
 
 #if !defined(QL_NO_UBLAS_SUPPORT)
-        Disposable<SparseMatrix> toMatrix() const;
+        Disposable<SparseMatrix> toMatrix() const override;
 #endif
 
       protected:
-        TripleBandLinearOp() {}
+        TripleBandLinearOp() = default;
 
         Size direction_;
         boost::shared_array<Size> i0_, i2_;

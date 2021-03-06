@@ -44,18 +44,18 @@ namespace QuantLib {
         CrossCurrencyBasisSwapRateHelper(const Handle<Quote>& basis,
                                          const Period& tenor,
                                          Natural fixingDays,
-                                         const Calendar& calendar,
+                                         Calendar calendar,
                                          BusinessDayConvention convention,
                                          bool endOfMonth,
-                                         const ext::shared_ptr<IborIndex>& baseCurrencyIndex,
-                                         const ext::shared_ptr<IborIndex>& quoteCurrencyIndex,
-                                         const Handle<YieldTermStructure>& collateralCurve,
+                                         ext::shared_ptr<IborIndex> baseCurrencyIndex,
+                                         ext::shared_ptr<IborIndex> quoteCurrencyIndex,
+                                         Handle<YieldTermStructure> collateralCurve,
                                          bool isFxBaseCurrencyCollateralCurrency,
                                          bool isBasisOnFxBaseCurrencyLeg);
         //! \name RateHelper interface
         //@{
-        Real impliedQuote() const;
-        void setTermStructure(YieldTermStructure*);
+        Real impliedQuote() const override;
+        void setTermStructure(YieldTermStructure*) override;
         //@}
         //! \name CrossCurrencyBasisSwapRateHelper inspectors
         //@{
@@ -64,7 +64,7 @@ namespace QuantLib {
         //@}
         //! \name Visitability
         //@{
-        void accept(AcyclicVisitor&);
+        void accept(AcyclicVisitor&) override;
         //@}
         //! \name CrossCurrencyBasisSwapRateHelper utility functions.
         //@{
@@ -80,7 +80,7 @@ namespace QuantLib {
                                                            Spread basis = 0.0);
         //@}
       protected:
-        void initializeDates();
+        void initializeDates() override;
 
         Period tenor_;
         Natural fixingDays_;
