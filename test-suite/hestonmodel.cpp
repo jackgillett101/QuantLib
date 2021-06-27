@@ -53,7 +53,7 @@
 #include <ql/time/daycounters/actual365fixed.hpp>
 #include <ql/time/daycounters/actualactual.hpp>
 #include <ql/time/period.hpp>
-#include <boost/math/special_functions/fpclassify.hpp>
+#include <cmath>
 #include <utility>
 
 using namespace QuantLib;
@@ -295,7 +295,7 @@ void HestonModelTest::testAnalyticVsBlack() {
 
     Date settlementDate = Date::todaysDate();
     Settings::instance().evaluationDate() = settlementDate;
-    DayCounter dayCounter = ActualActual();
+    DayCounter dayCounter = ActualActual(ActualActual::ISDA);
     Date exerciseDate = settlementDate + 6*Months;
 
     ext::shared_ptr<StrikedTypePayoff> payoff(
@@ -366,7 +366,7 @@ void HestonModelTest::testAnalyticVsCached() {
 
     Date settlementDate(27, December, 2004);
     Settings::instance().evaluationDate() = settlementDate;
-    DayCounter dayCounter = ActualActual();
+    DayCounter dayCounter = ActualActual(ActualActual::ISDA);
     Date exerciseDate(28, March, 2005);
 
     ext::shared_ptr<StrikedTypePayoff> payoff(
@@ -468,7 +468,7 @@ void HestonModelTest::testMcVsCached() {
     Date settlementDate(27, December, 2004);
     Settings::instance().evaluationDate() = settlementDate;
 
-    DayCounter dayCounter = ActualActual();
+    DayCounter dayCounter = ActualActual(ActualActual::ISDA);
     Date exerciseDate(28, March, 2005);
 
     ext::shared_ptr<StrikedTypePayoff> payoff(
@@ -579,7 +579,7 @@ void HestonModelTest::testFdVanillaVsCached() {
     Date settlementDate(27, December, 2004);
     Settings::instance().evaluationDate() = settlementDate;
 
-    DayCounter dayCounter = ActualActual();
+    DayCounter dayCounter = ActualActual(ActualActual::ISDA);
     Date exerciseDate(28, March, 2005);
 
     ext::shared_ptr<StrikedTypePayoff> payoff(
@@ -721,7 +721,7 @@ void HestonModelTest::testKahlJaeckelCase() {
     Date settlementDate(30, March, 2007);
     Settings::instance().evaluationDate() = settlementDate;
 
-    DayCounter dayCounter = ActualActual();
+    DayCounter dayCounter = ActualActual(ActualActual::ISDA);
     Date exerciseDate(30, March, 2017);
 
     const ext::shared_ptr<StrikedTypePayoff> payoff(
@@ -874,7 +874,7 @@ void HestonModelTest::testDifferentIntegrals() {
     const Date settlementDate(27, December, 2004);
     Settings::instance().evaluationDate() = settlementDate;
 
-    const DayCounter dayCounter = ActualActual();
+    const DayCounter dayCounter = ActualActual(ActualActual::ISDA);
 
     Handle<YieldTermStructure> riskFreeTS(flatRate(0.05, dayCounter));
     Handle<YieldTermStructure> dividendTS(flatRate(0.03, dayCounter));
@@ -998,7 +998,7 @@ void HestonModelTest::testMultipleStrikesEngine() {
     Date settlementDate(27, December, 2004);
     Settings::instance().evaluationDate() = settlementDate;
 
-    DayCounter dayCounter = ActualActual();
+    DayCounter dayCounter = ActualActual(ActualActual::ISDA);
     Date exerciseDate(28, March, 2006);
 
     ext::shared_ptr<Exercise> exercise(
@@ -1078,7 +1078,7 @@ void HestonModelTest::testAnalyticPiecewiseTimeDependent() {
 
     Date settlementDate(27, December, 2004);
     Settings::instance().evaluationDate() = settlementDate;
-    DayCounter dayCounter = ActualActual();
+    DayCounter dayCounter = ActualActual(ActualActual::ISDA);
     Date exerciseDate(28, March, 2005);
 
     ext::shared_ptr<StrikedTypePayoff> payoff(
@@ -1314,7 +1314,7 @@ void HestonModelTest::testAlanLewisReferencePrices() {
                 const Real calculated = option.NPV();
                 const Real relError = std::fabs(calculated-expected)/expected;
 
-                if (relError > tol || boost::math::isnan(calculated)) {
+                if (relError > tol || std::isnan(calculated)) {
                     BOOST_ERROR(
                            "failed to reproduce Alan Lewis Reference prices "
                         << "\n    strike     : " << strike
@@ -1617,7 +1617,7 @@ namespace {
 
         const Real error = std::fabs(calculated - expected);
 
-        if (boost::math::isnan(error) || error > tol) {
+        if (std::isnan(error) || error > tol) {
             BOOST_ERROR("failed to reproduce simple Heston Pricing with "
                     << "\n    integration method: " << method
                     <<  std::setprecision(12)

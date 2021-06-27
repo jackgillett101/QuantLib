@@ -132,7 +132,7 @@ namespace inflation_capfloored_coupon_test {
             fixingDays = 0;
             settlement = calendar.advance(today,settlementDays,Days);
             startDate = settlement;
-            dc = Thirty360();
+            dc = Thirty360(Thirty360::BondBasis);
 
             // yoy index
             //      fixing data
@@ -156,7 +156,7 @@ namespace inflation_capfloored_coupon_test {
             }
 
             ext::shared_ptr<YieldTermStructure> nominalFF(
-                        new FlatForward(evaluationDate, 0.05, ActualActual()));
+                        new FlatForward(evaluationDate, 0.05, ActualActual(ActualActual::ISDA)));
             nominalTS.linkTo(nominalFF);
 
             // now build the YoY inflation curve
@@ -735,17 +735,17 @@ void InflationCapFlooredCouponTest::testInstrumentEquality() {
                     .backwards()
                     ;
 
-                    YearOnYearInflationSwap swap(YearOnYearInflationSwap::Payer,
-                                                    1000000.0,
-                                                    yoySchedule,//fixed schedule, but same as yoy
-                                                    0.0,//strikes[j],
-                                                    vars.dc,
-                                                    yoySchedule,
-                                                    vars.iir,
-                                                    vars.observationLag,
-                                                    0.0,        //spread on index
-                                                    vars.dc,
-                                                    UnitedKingdom());
+                    YearOnYearInflationSwap swap(Swap::Payer,
+                                                 1000000.0,
+                                                 yoySchedule,//fixed schedule, but same as yoy
+                                                 0.0,//strikes[j],
+                                                 vars.dc,
+                                                 yoySchedule,
+                                                 vars.iir,
+                                                 vars.observationLag,
+                                                 0.0,        //spread on index
+                                                 vars.dc,
+                                                 UnitedKingdom());
 
                     Handle<YieldTermStructure> hTS(vars.nominalTS);
                     ext::shared_ptr<PricingEngine> sppe(new DiscountingSwapEngine(hTS));

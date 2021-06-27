@@ -22,8 +22,6 @@
 
 namespace QuantLib {
 
-    CPICouponPricer::CPICouponPricer() = default;
-
     CPICouponPricer::CPICouponPricer(Handle<YieldTermStructure> nominalTermStructure)
     : nominalTermStructure_(std::move(nominalTermStructure)) {
         registerWith(nominalTermStructure_);
@@ -39,7 +37,7 @@ namespace QuantLib {
 
     void CPICouponPricer::setCapletVolatility(
        const Handle<CPIVolatilitySurface>& capletVol) {
-        QL_REQUIRE(!capletVol.empty(),"empty capletVol handle")
+        QL_REQUIRE(!capletVol.empty(),"empty capletVol handle");
         capletVol_ = capletVol;
         registerWith(capletVol_);
     }

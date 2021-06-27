@@ -138,6 +138,7 @@ set(QuantLib-Test_SRC
     spreadoption.cpp
     squarerootclvmodel.cpp
     stats.cpp
+    subperiodcoupons.cpp
     swap.cpp
     swapforwardmappings.cpp
     swaption.cpp
@@ -160,6 +161,7 @@ set(QuantLib-Test_SRC
     volatilitymodels.cpp
     vpp.cpp
     zabr.cpp
+    zerocouponswap.cpp
 )
 
 # hpp files, this list is maintained manually
@@ -302,6 +304,7 @@ set(QuantLib-Test_HDR
     spreadoption.hpp
     squarerootclvmodel.hpp
     stats.hpp
+    subperiodcoupons.hpp
     swap.hpp
     swapforwardmappings.hpp
     swaption.hpp
@@ -325,6 +328,7 @@ set(QuantLib-Test_HDR
     volatilitymodels.hpp
     vpp.hpp
     zabr.hpp
+    zerocouponswap.hpp
 )
 
 set(BENCHMARK_FILES 

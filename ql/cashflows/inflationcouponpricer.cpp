@@ -34,8 +34,6 @@ namespace QuantLib {
     }
 
 
-    YoYInflationCouponPricer::YoYInflationCouponPricer() = default;
-
     YoYInflationCouponPricer::YoYInflationCouponPricer(
         Handle<YieldTermStructure> nominalTermStructure)
     : nominalTermStructure_(std::move(nominalTermStructure)) {
@@ -53,7 +51,7 @@ namespace QuantLib {
 
     void YoYInflationCouponPricer::setCapletVolatility(
        const Handle<YoYOptionletVolatilitySurface>& capletVol) {
-        QL_REQUIRE(!capletVol.empty(),"empty capletVol handle")
+        QL_REQUIRE(!capletVol.empty(),"empty capletVol handle");
         capletVol_ = capletVol;
         registerWith(capletVol_);
     }

@@ -123,7 +123,7 @@ namespace inflation_capfloor_test {
             settlementDays = 0;
             fixingDays = 0;
             settlement = calendar.advance(today,settlementDays,Days);
-            dc = Thirty360();
+            dc = Thirty360(Thirty360::BondBasis);
 
             // yoy index
             //      fixing data
@@ -147,7 +147,7 @@ namespace inflation_capfloor_test {
             }
 
             ext::shared_ptr<YieldTermStructure> nominalFF(
-                new FlatForward(evaluationDate, 0.05, ActualActual()));
+                new FlatForward(evaluationDate, 0.05, ActualActual(ActualActual::ISDA)));
             nominalTS.linkTo(nominalFF);
 
             // now build the YoY inflation curve
@@ -433,7 +433,7 @@ void InflationCapFloorTest::testParity() {
                     .backwards()
                     ;
 
-                    YearOnYearInflationSwap swap(YearOnYearInflationSwap::Payer, 1000000.0,
+                    YearOnYearInflationSwap swap(Swap::Payer, 1000000.0,
                                                  yoySchedule, // fixed schedule, but same as yoy
                                                  strike, vars.dc, yoySchedule, vars.iir,
                                                  vars.observationLag,

@@ -126,8 +126,8 @@ namespace inflation_cpi_swap_test {
             fixingDays = 0;
             settlement = calendar.advance(today,settlementDays,Days);
             startDate = settlement;
-            dcZCIIS = ActualActual();
-            dcNominal = ActualActual();
+            dcZCIIS = ActualActual(ActualActual::ISDA);
+            dcNominal = ActualActual(ActualActual::ISDA);
 
             // uk rpi index
             //      fixing data
@@ -268,7 +268,7 @@ void CPISwapTest::consistency() {
 
     // ZeroInflationSwap aka CPISwap
 
-    CPISwap::Type type = CPISwap::Payer;
+    Swap::Type type = Swap::Payer;
     Real nominal = 1000000.0;
     bool subtractInflationNominal = true;
     // float+spread leg
@@ -387,13 +387,13 @@ void CPISwapTest::zciisconsistency() {
 
     CommonVars common;
 
-    ZeroCouponInflationSwap::Type ztype = ZeroCouponInflationSwap::Payer;
+    Swap::Type ztype = Swap::Payer;
     Real  nominal = 1000000.0;
     Date startDate(common.evaluationDate);
     Date endDate(25, November, 2059);
     Calendar cal = UnitedKingdom();
     BusinessDayConvention paymentConvention = ModifiedFollowing;
-    DayCounter dummyDC, dc = ActualActual();
+    DayCounter dummyDC, dc = ActualActual(ActualActual::ISDA);
     Period observationLag(2,Months);
 
     Rate quote = 0.03714;
@@ -411,7 +411,7 @@ void CPISwapTest::zciisconsistency() {
     std::vector<Date> oneDate = {endDate};
     Schedule schOneDate(oneDate, cal, paymentConvention);
 
-    CPISwap::Type stype = CPISwap::Payer;
+    Swap::Type stype = Swap::Payer;
     Real inflationNominal = nominal;
     Real floatNominal = inflationNominal * std::pow(1.0+quote,50);
     bool subtractInflationNominal = true;
@@ -447,7 +447,7 @@ void CPISwapTest::cpibondconsistency() {
 
     // ZeroInflationSwap aka CPISwap
 
-    CPISwap::Type type = CPISwap::Payer;
+    Swap::Type type = Swap::Payer;
     Real nominal = 1000000.0;
     bool subtractInflationNominal = true;
     // float+spread leg

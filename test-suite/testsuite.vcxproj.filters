@@ -483,6 +483,12 @@
     <ClCompile Include="crosscurrencyratehelpers.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="subperiodcoupons.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="zerocouponswap.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="americanoption.hpp">
@@ -963,6 +969,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="crosscurrencyratehelpers.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="subperiodcoupons.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="zerocouponswap.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -18,7 +18,7 @@
  FOR A PARTICULAR PURPOSE.  See the license for more details.
 */
 
-#include <ql/experimental/futures/overnightindexfutureratehelper.hpp>
+#include <ql/termstructures/yield/overnightindexfutureratehelper.hpp>
 #include <ql/utilities/null_deleter.hpp>
 
 namespace QuantLib {
@@ -53,18 +53,20 @@ namespace QuantLib {
         const Date& maturityDate,
         const ext::shared_ptr<OvernightIndex>& overnightIndex,
         const Handle<Quote>& convexityAdjustment,
-        OvernightAveraging::Type averagingMethod)
+        RateAveraging::Type averagingMethod)
     : RateHelper(price) {
         ext::shared_ptr<Payoff> payoff;
+        ext::shared_ptr<OvernightIndex> index =
+            ext::dynamic_pointer_cast<OvernightIndex>(overnightIndex->clone(termStructureHandle_));
         future_ = ext::make_shared<OvernightIndexFuture>(
-            overnightIndex, payoff, valueDate, maturityDate, termStructureHandle_,
-            convexityAdjustment, averagingMethod);
+            index, valueDate, maturityDate, convexityAdjustment, averagingMethod);
         earliestDate_ = valueDate;
         latestDate_ = maturityDate;
     }
 
     Real OvernightIndexFutureRateHelper::impliedQuote() const {
-        return future_->spotValue();
+        future_->recalculate();
+        return future_->NPV();
     }
 
     void OvernightIndexFutureRateHelper::setTermStructure(YieldTermStructure* t) {
@@ -97,7 +99,7 @@ namespace QuantLib {
         Frequency referenceFreq,
         const ext::shared_ptr<OvernightIndex>& overnightIndex,
         const Handle<Quote>& convexityAdjustment,
-        OvernightAveraging::Type averagingMethod)
+        RateAveraging::Type averagingMethod)
     : OvernightIndexFutureRateHelper(price,
                                      getValidSofrStart(referenceMonth, referenceYear, referenceFreq),
                                      getValidSofrEnd(referenceMonth, referenceYear, referenceFreq),
@@ -120,7 +122,7 @@ namespace QuantLib {
         Frequency referenceFreq,
         const ext::shared_ptr<OvernightIndex>& overnightIndex,
         Real convexityAdjustment,
-        OvernightAveraging::Type averagingMethod)
+        RateAveraging::Type averagingMethod)
     : OvernightIndexFutureRateHelper(
           Handle<Quote>(ext::make_shared<SimpleQuote>(price)),
           getValidSofrStart(referenceMonth, referenceYear, referenceFreq),

@@ -25,7 +25,7 @@
 #ifndef quantlib_overnightindexfutureratehelper_hpp
 #define quantlib_overnightindexfutureratehelper_hpp
 
-#include <ql/experimental/futures/overnightindexfuture.hpp>
+#include <ql/instruments/overnightindexfuture.hpp>
 #include <ql/termstructures/yield/ratehelpers.hpp>
 
 namespace QuantLib {
@@ -40,7 +40,7 @@ namespace QuantLib {
                                        const Date& maturityDate,
                                        const ext::shared_ptr<OvernightIndex>& overnightIndex,
                                        const Handle<Quote>& convexityAdjustment = Handle<Quote>(),
-                                       OvernightAveraging::Type averagingMethod = OvernightAveraging::Compound);
+                                       RateAveraging::Type averagingMethod = RateAveraging::Compound);
 
         //! \name RateHelper interface
         //@{
@@ -73,14 +73,14 @@ namespace QuantLib {
                              Frequency referenceFreq,
                              const ext::shared_ptr<OvernightIndex>& overnightIndex,
                              const Handle<Quote>& convexityAdjustment = Handle<Quote>(),
-                             OvernightAveraging::Type averagingMethod = OvernightAveraging::Compound);
+                             RateAveraging::Type averagingMethod = RateAveraging::Compound);
         SofrFutureRateHelper(Real price,
                              Month referenceMonth,
                              Year referenceYear,
                              Frequency referenceFreq,
                              const ext::shared_ptr<OvernightIndex>& overnightIndex,
                              Real convexityAdjustment = 0,
-                             OvernightAveraging::Type averagingMethod = OvernightAveraging::Compound);
+                             RateAveraging::Type averagingMethod = RateAveraging::Compound);
     };
 
 }

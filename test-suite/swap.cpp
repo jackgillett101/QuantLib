@@ -44,7 +44,7 @@ namespace swap_test {
     struct CommonVars {
         // global data
         Date today, settlement;
-        VanillaSwap::Type type;
+        Swap::Type type;
         Real nominal;
         Calendar calendar;
         BusinessDayConvention fixedConvention, floatingConvention;
@@ -81,14 +81,14 @@ namespace swap_test {
         }
 
         CommonVars() {
-            type = VanillaSwap::Payer;
+            type = Swap::Payer;
             settlementDays = 2;
             nominal = 100.0;
             fixedConvention = Unadjusted;
             floatingConvention = ModifiedFollowing;
             fixedFrequency = Annual;
             floatingFrequency = Semiannual;
-            fixedDayCount = Thirty360();
+            fixedDayCount = Thirty360(Thirty360::BondBasis);
             index = ext::shared_ptr<IborIndex>(new
                 Euribor(Period(floatingFrequency), termStructure));
             calendar = index->fixingCalendar();
